@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.Rhistory
+.Rproj.user/
+.DS_Store
+.r-lib/
+*.tsbuildinfo

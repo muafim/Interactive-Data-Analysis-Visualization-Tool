@@ -1,0 +1,371 @@
+---
+title: "Analisis Penggunaan Alat Transportasi Terhadap Pengeluaran Mahasiswa TSD 2022"
+author: "Kelompok 5"
+date: "2023-12-22"
+output:
+  pdf_document: default
+---
+
+**Kelompok 5**:
+1. Meri Agustina (164221025)
+2. Najla Dhia Rusydi (164221043)
+3. Shiba Salsabilla (164221078)
+4. Ramadhan Eko Saputra (164221088)
+5. Muhammad Firdaus Mu’afi (164221092)
+
+Data yang kami gunakan dari kuesioner yang telah kami buat, berikut  hasil jawaban yang kami dapat setlah membagikan kuesioner:
+
+https://docs.google.com/spreadsheets/d/1J2Ba0cyBBr6GPEd6j7D5mOMVN-Jy1HS_UrVVxTgF_ys/edit?usp=sharing
+
+# Import Librarry
+```{r}
+library(dummy)
+library(readr)
+library(mice)
+library(dplyr)
+library(VIM)
+library(caret)
+library(fastDummies)
+library(reshape2)
+```
+
+# Input data
+```{r}
+library(readr)
+uas<- read_csv("C:/Users/HP/Downloads/uas - Form Responses 1.csv", 
+                                 col_types = cols(umur = col_number(), 
+                                                  jarak = col_number(), waktu = col_number(), 
+                                                  biaya = col_number(), tingkat_mobilitas = col_number()))
+uas
+```
+
+# Exploratory Data Analysis
+
+```{r}
+summary(uas)
+```
+
+#Pie Chart Jenis Transportasi
+```{r}
+# Hitung frekuensi kemunculan setiap nilai pada variabel transportasi
+frekuensi_transportasi <- table(uas$transportasi)
+
+# Hitung persentase masing-masing kategori
+persentase_transportasi <- prop.table(frekuensi_transportasi) * 100
+
+# Warna pastel
+warna_pastel <- c("#FFCCCC", "#FFD700", "#98FB98", "#DDA0DD", "#B0E0E6", "#FFA07A", "#D8BFD8")
+
+# Buat diagram lingkaran dengan labels persentase di dalam
+pie(frekuensi_transportasi, main="Jumlah Pengguna Transportasi", col=warna_pastel,
+    labels=sprintf("%.1f%%", persentase_transportasi), cex=0.8)
+
+# Tambahkan legenda
+legend("topright", legend=paste(names(frekuensi_transportasi), ": ", sprintf("%.1f%%", persentase_transportasi)), fill=warna_pastel, cex=0.8)
+```
+
+# Pie Chart Jenis Kendaraan
+
+```{r}
+#Hitung frekuensi kemunculan setiap nilai pada variabel transportasi
+kendaraan <- table(uas$jenis_kendaraan)
+frekuensi_kendaraan <- table(uas$jenis_kendaraan)
+persentase_kendaraan <- prop.table(frekuensi_kendaraan) * 100
+
+# Warna pastel
+warna_pastel <- c("#FFCCCC", "#FFD700", "#98FB98", "#DDA0DD", "#B0E0E6", "#FFA07A", "#D8BFD8")
+
+# Buat diagram lingkaran dengan labels persentase di dalam
+pie(frekuensi_kendaraan, main="Jenis Kendaraan", col=warna_pastel,
+    labels=sprintf("%.1f%%", persentase_kendaraan), cex=0.8)
+
+# Tambahkan legenda
+legend("topright", legend=paste(names(frekuensi_kendaraan), ": ", sprintf("%.1f%%", persentase_kendaraan)), fill=warna_pastel, cex=0.8)
+```
+
+# Pie Chart Gender
+
+```{r}
+#Hitung frekuensi kemunculan setiap nilai pada variabel transportasi
+gender <- table(uas$gender)
+frekuensi_gender <- table(uas$gender)
+persentase_gender <- prop.table(frekuensi_gender) * 100
+
+# Warna pastel
+warna_pastel <- c("#FFCCCC", "#FFD700", "#98FB98", "#DDA0DD", "#B0E0E6", "#FFA07A", "#D8BFD8")
+
+# Buat diagram lingkaran dengan labels persentase di dalam
+pie(frekuensi_gender, main="Jenis Kelamin Responden", col=warna_pastel,
+    labels=sprintf("%.1f%%", persentase_gender), cex=0.8)
+
+# Tambahkan legenda
+legend("topright", legend=paste(names(frekuensi_gender), ": ", sprintf("%.1f%%", persentase_gender)), fill=warna_pastel, cex=0.8)
+```
+
+# Pie Chart Performa Kendaraan
+
+```{r}
+# Hitung frekuensi kemunculan setiap nilai pada variabel transportasi
+performa <- table(uas$performa_kendaraan)
+frekuensi_performa <- table(uas$performa_kendaraan)
+persentase_performa <- prop.table(frekuensi_performa) * 100
+
+# Warna pastel
+warna_pastel <- c("#FFCCCC", "#FFD700", "#98FB98", "#DDA0DD", "#B0E0E6", "#FFA07A", "#D8BFD8")
+
+# Buat diagram lingkaran dengan labels persentase di dalam
+pie(frekuensi_performa, main="Performa Kendaraan", col=warna_pastel,
+    labels=sprintf("%.1f%%", persentase_performa), cex=0.8)
+
+# Tambahkan legenda
+legend("topright", legend=paste(names(frekuensi_performa), ": ", sprintf("%.1f%%", persentase_performa)), fill=warna_pastel, cex=0.8)
+```
+
+
+# Data Preprocessing
+
+## drop variabel tidak perlu
+```{r}
+uas <- subset(uas, select = -Timestamp)
+```
+
+## Data exploration
+```{r}
+kolom_kategorik_types <- sapply(uas, class)
+df_kolom_kategorik_types <- data.frame(
+  Variable_Name = names(kolom_kategorik_types),
+  kolom_kategorik_Type = as.character(kolom_kategorik_types),
+  stringsAsFactors = FALSE
+)
+print(df_kolom_kategorik_types)
+```
+## Missing Value
+
+### Cek missing value
+```{r}
+aggr_plot <- aggr(uas, col=c('navyblue','red'), numbers=TRUE,
+ sortVars=TRUE, labels=names(uas), cex.axis=.4,
+ gap=3, ylab=c("Histogram of missing kolom_kategorik","Pattern"))
+```
+```{r}
+md.pattern(uas)
+```
+
+
+tidak ditemukan missing value
+
+## Outliers
+```{r}
+uas_numeric <- uas %>%
+  select_if(function(x) is.numeric(x))
+
+head(uas_numeric)
+```
+
+### Cek Outliers menggunakan boxplot
+
+```{r}
+par(mfrow=c(1, 5))
+for(i in 1:5) {boxplot(uas_numeric[,i], main=names(uas_numeric)[i])}
+```
+
+### Penghapusan Outliers
+
+```{r}
+remove_outliers <- function(dataframe) {
+  numeric_columns <- sapply(dataframe, is.numeric)
+  for (col in names(dataframe)[numeric_columns]) {
+    Q1 <- quantile(dataframe[[col]], 0.25)
+    Q3 <- quantile(dataframe[[col]], 0.75)
+    IQR_val <- Q3 - Q1
+    lower_bound <- Q1 - 1.5 * IQR_val
+    upper_bound <- Q3 + 1.5 * IQR_val
+    dataframe <- dataframe[dataframe[[col]] >= lower_bound & dataframe[[col]] <= upper_bound, ]
+  }
+  return(dataframe)
+}
+
+uas_cleaned <- remove_outliers(uas)
+```
+### Boxplot setelah outliers dihapus
+
+```{r}
+par(mfrow=c(1, 5))
+for (col in names(uas_cleaned)) {
+  if (is.numeric(uas_cleaned[[col]])) {
+    boxplot(uas_cleaned[[col]], main=col)
+  }
+}
+```
+
+
+## cek distribusi data apakah normal
+```{r}
+cleaned_numeric <- uas_cleaned %>%
+  select_if(function(x) is.numeric(x))
+
+head(cleaned_numeric)
+```
+
+### Saphiro Test
+```{r}
+uas_cleaned_numeric <- uas_cleaned %>%
+  select_if(function(x) is.numeric(x))
+```
+
+```{r}
+shapiro_results <- data.frame(variable = character(),
+                               p_value = numeric(),
+                               stringsAsFactors = FALSE)
+
+# Loop melalui setiap kolom dalam data frame
+for (col in names(uas_cleaned_numeric)) {
+  # Melakukan uji Shapiro untuk setiap kolom
+  result <- shapiro.test(uas_cleaned_numeric[[col]])
+  
+  # Menambahkan hasil ke data frame
+  shapiro_results <- rbind(shapiro_results, 
+                           data.frame(variable = col,
+                                      p_value = result$p.value,
+                                      stringsAsFactors = FALSE))
+}
+
+# Menampilkan hasil
+print(shapiro_results)
+
+# Menolak atau tidak menolak hipotesis nol untuk setiap kolom
+shapiro_results$normality <- ifelse(shapiro_results$p_value < 0.05, 
+                                    "Tidak normal", 
+                                    "Normal")
+
+# Menampilkan tabel hasil
+print(shapiro_results)
+```
+
+Outliers telah dihapus, data tetap berdistribusi tidak normal
+
+### Normalisasi Z-score
+```{r}
+uas_stdz <- as.data.frame(scale(uas_cleaned_numeric))
+head(uas_stdz)
+
+```
+
+## REDUKSI DIMENSI
+### PCA
+```{r}
+uas_pca <- prcomp(uas_cleaned_numeric, scale. = TRUE)
+uas_pca
+```
+
+```{r}
+arrest.pca_uas <- prcomp(scale(uas_cleaned_numeric), center = TRUE)
+names(arrest.pca_uas)
+print(arrest.pca_uas)
+```
+```{r}
+summary(arrest.pca_uas)
+```
+### backward elimination
+```{r}
+X <- uas_cleaned_numeric[, !(names(uas_cleaned_numeric) %in% c("biaya"))]
+y <- uas_cleaned_numeric$biaya
+
+X <- cbind(1, X)
+initial_model_uas <- lm(y ~ ., data = data.frame(cbind(y, X)))
+
+backward_elimination <- function(model) {
+  while (TRUE) {
+    p_values <- summary(model)$coefficients[-1, "Pr(>|t|)"]
+    if (all(p_values <= 0.05)) {
+      break
+    }
+    
+    feature_with_max_pvalue <- names(p_values)[which.max(p_values)]
+    X <- X[, !(names(X) %in% c(feature_with_max_pvalue))]
+    model <- lm(y ~ ., data = data.frame(cbind(y, X)))
+    print(paste('Variables: ', names(X), '| R-Squared: ', summary(model)$adj.r.squared))
+  }
+  return(model)
+}
+final_model <- backward_elimination(initial_model_uas)
+
+```
+
+```{r}
+summary(initial_model_uas)
+```
+
+## Encoding One Hot
+```{r}
+kolom_kategorikal <- c('jenis_kendaraan', 'transportasi', 'gender', 'performa_kendaraan')
+
+df_encoded <- dummy_cols(uas[, kolom_kategorikal])
+uas_encoded <- cbind(uas, df_encoded)
+uas_encoded <- uas_encoded %>%
+  select(-one_of(kolom_kategorikal))
+
+head (uas_encoded)
+
+```
+
+# Analisis
+
+## kategorik (kruskal wallis)
+```{r}
+
+kolom_kategorikal <- c('gender', 'transportasi','jenis_kendaraan', 'performa_kendaraan') 
+for (kolom in kolom_kategorikal) {
+  result <- kruskal.test(biaya ~ get(kolom), data = uas_cleaned)
+  cat("Hasil uji untuk variabel:", kolom, "\n")
+  print(result)
+  p_value <- result$p.value
+  alpha <- 0.05 
+  if (p_value < alpha) {
+    cat("Terdapat perbedaan signifikan dalam biaya antara", kolom, "yang berbeda.\n\n")
+  } else {
+    cat("Tidak cukup bukti untuk menyatakan adanya perbedaan signifikan dalam biaya antara", kolom, "yang berbeda.\n\n")
+  }
+}
+
+```
+
+## Numerik (Tukendal)
+```{r}
+kolom_numerik_cleaned <- sapply(uas_cleaned, is.numeric)
+
+nama_biaya <- "biaya"
+
+for (kolom in names(uas_cleaned)[kolom_numerik_cleaned]) {
+  if (kolom != nama_biaya) {
+    result <- cor.test(uas_cleaned[[nama_biaya]], uas_cleaned[[kolom]], method = "kendall")
+    cat("Uji asosiasi antara", nama_biaya, "dan", kolom, "\n")
+    print(result)
+    
+if (result$p.value < 0.05) {
+    cat("Hipotesis nol ditolak, terdapat asosiasi yang signifikan antara", nama_biaya, 
+    "dan", kolom, "\n\n")} 
+else {
+      cat("Tidak cukup bukti untuk menolak hipotesis nol, tidak terdapat asosiasi yang 
+          signifikan antara", nama_biaya, "dan", kolom, "\n\n")
+    }
+  }
+}
+
+
+```
+
+# Korelasi antar variabel
+
+```{r}
+correlation_matrix <- cor(uas_encoded)
+ggplot(data = melt(correlation_matrix, na.rm = TRUE), aes(Var2, Var1, fill = value)) +
+  geom_tile() +
+  geom_text(aes(label = round(value, 2)), color = "black", size = 2.5) +
+  scale_fill_viridis_c() +
+  labs(title = "Heatmap Korelasi Antar Variabel") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(angle = 0, hjust = 1))
+```
+

@@ -1,0 +1,62 @@
+"gender","umur","transportasi","jenis_kendaraan","jarak","waktu","biaya","performa_kendaraan","tingkat_mobilitas"
+"Laki-laki",19,"Kendaraan pribadi","Motor",1,15,50000,"Baik",8
+"Perempuan",18,"Ojek online","Motor",3.2,8,80000,"Baik",7
+"Laki-laki",19,"Kendaraan pribadi","Motor",3,15,25000,"Sangat baik",9
+"Perempuan",20,"Kendaraan pribadi","Motor",4,15,15000,"Baik",7
+"Perempuan",19,"Ojek online","Motor",1.3,3,50000,"Sangat baik",6
+"Laki-laki",18,"Kendaraan pribadi","Motor",2.2,15,25000,"Sangat baik",7
+"Laki-laki",19,"Kendaraan pribadi","Motor",4.7,15,15000,"Baik",8
+"Laki-laki",18,"Kendaraan pribadi","Motor",2.5,10,20000,"Baik",8
+"Laki-laki",19,"Kendaraan pribadi","Motor",3,10,50000,"Baik",10
+"Laki-laki",19,"Kendaraan pribadi","Motor",1.1,7,30000,"Sangat baik",8
+"Perempuan",20,"Kendaraan umum","Motor",3,10,2000,"Kurang baik",9
+"Laki-laki",20,"Kendaraan pribadi","Motor",1.8,5,30000,"Kurang baik",10
+"Laki-laki",19,"Kendaraan pribadi","Motor",14,20,70000,"Baik",6
+"Perempuan",20,"Kendaraan pribadi","Motor",1.5,5,25000,"Sangat baik",7
+"Laki-laki",19,"Kendaraan pribadi","Motor",2.7,10,40,"Baik",9
+"Perempuan",20,"Kendaraan pribadi","Motor",2.7,10,30000,"Sangat baik",6
+"Perempuan",20,"Kendaraan pribadi","Motor",1.2,5,10000,"Baik",10
+"Perempuan",19,"Kendaraan pribadi","Motor",1,7,45000,"Sangat baik",8
+"Perempuan",19,"Ojek online","Motor",5.6,20,78000,"Baik",6
+"Perempuan",19,"Kendaraan pribadi","Motor",3.9,15,50000,"Sangat baik",7
+"Laki-laki",20,"Kendaraan pribadi","Motor",5,15,20000,"Sangat baik",8
+"Perempuan",20,"Kendaraan pribadi","Motor",1.5,5,10000,"Sangat baik",9
+"Perempuan",19,"Ojek online","Mobil",3.9,10,1e+05,"Baik",6
+"Laki-laki",20,"Kendaraan pribadi","Motor",1.9,15,30000,"Baik",8
+"Laki-laki",20,"Kendaraan pribadi","Motor",4,15,30000,"Sangat baik",8
+"Laki-laki",20,"Kendaraan pribadi","Motor",2.5,10,10000,"Baik",8
+"Perempuan",19,"Kendaraan pribadi","Motor",2,10,30000,"Baik",6
+"Laki-laki",19,"Ojek online","Motor",3.1,15,12000,"Kurang baik",10
+"Perempuan",20,"Kendaraan pribadi","Motor",1.3,8,50000,"Baik",7
+"Perempuan",20,"Ojek online","Motor",1,5,40000,"Sangat baik",7
+"Perempuan",20,"Kendaraan pribadi","Motor",4,15,25000,"Baik",4
+"Perempuan",20,"Kendaraan pribadi","Motor",3.1,7,27000,"Baik",6
+"Laki-laki",19,"Kendaraan pribadi","Motor",2,5,30,"Sangat baik",6
+"Laki-laki",19,"Ojek online","Motor",4,15,1e+05,"Baik",5
+"Perempuan",19,"Kendaraan pribadi","Motor",2,15,50000,"Baik",7
+"Perempuan",19,"Kendaraan pribadi","Motor",2,5,20,"Baik",6
+"Perempuan",20,"Ojek online","Motor",1.5,10,30000,"Kurang Baik",8
+"Perempuan",19,"Kendaraan pribadi","Motor",4.2,10,25000,"Baik",6
+"Laki-laki",20,"Kendaraan pribadi","Motor",8.5,21,45000,"Sangat baik",5
+"Perempuan",20,"Ojek online","Mobil",2,10,350,"Baik",10
+"Perempuan",19,"Ojek online","Motor",1.2,5,90000,"Sangat baik",10
+"Perempuan",20,"Ojek online","Motor",2,10,50000,"Kurang Baik",6
+"Perempuan",19,"Kendaraan pribadi","Motor",3.7,15,40000,"Baik",7
+"Perempuan",19,"Kendaraan pribadi","lainnya",0.5,10,20000,"Baik",5
+"Perempuan",20,"Ojek online","Motor",2.9,10,100,"Baik",8
+"Perempuan",19,"Ojek online","Motor",1,5,80000,"Kurang Baik",8
+"Laki-laki",20,"Kendaraan umum","lainnya",4.6,15,0,"Sangat baik",5
+"Perempuan",19,"Kendaraan pribadi","Motor",3.2,10,40000,"Baik",6
+"Perempuan",20,"Kendaraan pribadi","Motor",5,12,35000,"Baik",7
+"Laki-laki",19,"Ojek online","Motor",3,15,90000,"Sangat baik",9
+"Perempuan",20,"Kendaraan pribadi","Motor",3,10,35000,"Baik",7
+"Perempuan",20,"Kendaraan pribadi","Motor",4,15,5000,"Sangat baik",4
+"Perempuan",19,"Kendaraan pribadi","Motor",3,10,40000,"Sangat baik",6
+"Laki-laki",19,"Kendaraan pribadi","Motor",3.8,8,50000,"Baik",8
+"Laki-laki",19,"Kendaraan pribadi","Motor",2.8,15,20000,"Baik",5
+"Perempuan",20,"Ojek online","Motor",1,5,50000,"Baik",7
+"Perempuan",19,"Kendaraan pribadi","Motor",2.1,10,15000,"Kurang baik",6
+"Laki-laki",20,"Kendaraan pribadi","Motor",3.4,15,32000,"Baik",7
+"Laki-laki",20,"Ojek online","Motor",1.3,5,30000,"Baik",6
+"Perempuan",19,"Ojek online","lainnya",0.8,15,15000,"Baik",7
+"Laki-laki",19,"Ojek online","Motor",1,5,42000,"Baik",8

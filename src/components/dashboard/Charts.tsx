@@ -1,0 +1,71 @@
+import ReactEChartsCore from 'echarts-for-react/lib/core'
+import * as echarts from 'echarts/core'
+import { BarChart, BoxplotChart, ScatterChart, HeatmapChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent, VisualMapComponent, MarkLineComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import type { EChartsOption } from 'echarts'
+import type { TransportationRecord as Record, AnalysisSummary } from '../../types/transportation'
+import { box, currency, groups, histogram, labels, mean, median, modeColor, modeLabel, modes, number, pValue, percent } from '../../utils/analytics'
+
+const axis = { axisLine: { lineStyle: { color: '#CBD5E1' } }, axisTick: { show: false }, axisLabel: { color: '#667085', fontSize: 11 }, splitLine: { lineStyle: { color: '#EEF0F3' } } }
+const tooltip = { backgroundColor: '#172033', borderWidth: 0, textStyle: { color: '#fff', fontSize: 12 }, extraCssText: 'border-radius:4px;box-shadow:none;padding:10px 13px;' }
+echarts.use([BarChart, BoxplotChart, ScatterChart, HeatmapChart, GridComponent, TooltipComponent, LegendComponent, VisualMapComponent, MarkLineComponent, CanvasRenderer])
+export function Panel({ title, note, children, className = '' }: { title: string; note?: string; children: React.ReactNode; className?: string }) {
+  return <article className={`panel ${className}`}><div className="panel-heading"><div><h3>{title}</h3>{note && <p>{note}</p>}</div></div>{children}</article>
+}
+function Chart({ option, height = 275, summary }: { option: EChartsOption; height?: number; summary: string }) {
+  return <div role="img" aria-label={summary}><ReactEChartsCore echarts={echarts} option={option} style={{ height, width: '100%' }} notMerge lazyUpdate /></div>
+}
+export function Distribution({ records, field, title, note }: { records: Record[]; field: 'transportasi' | 'jenisKendaraan'; title: string; note: string }) {
+  const data = field === 'transportasi' ? modes.map(m => [m.key, records.filter(r => r.transportasi === m.key).length] as const) : groups(records, field)
+  const shown = data.filter(([, count]) => count > 0)
+  const option: EChartsOption = { grid: { top: 12, left: 128, right: 55, bottom: 18 }, xAxis: { type: 'value', ...axis, minInterval: 1 }, yAxis: { type: 'category', inverse: true, data: shown.map(([k]) => field === 'transportasi' ? modeLabel(k) : k), ...axis, axisLine: { show: false } },
+    tooltip: { ...tooltip, trigger: 'item', formatter: (params) => { const p = params as { dataIndex: number }; const [key, count] = shown[p.dataIndex]; return `${field === 'transportasi' ? modeLabel(key) : key}<br/>Respondents: <b>${count}</b><br/>Share: <b>${percent(count / records.length)}</b>` } },
+    series: [{ type: 'bar', barWidth: 19, data: shown.map(([key, count]) => ({ value: count, itemStyle: { color: field === 'transportasi' ? modeColor(key) : key === 'Motor' ? '#2563EB' : '#94A3B8' } })), label: { show: true, position: 'right', color: '#172033', formatter: (p: { dataIndex: number }) => `${shown[p.dataIndex][1]} · ${percent(shown[p.dataIndex][1] / records.length)}` } }] }
+  const top = [...shown].sort((a, b) => b[1] - a[1])[0]
+  return <Panel title={title} note={note}><Chart option={option} height={field === 'transportasi' ? 214 : 195} summary={`${title}: ${shown.map(([k, n]) => `${modeLabel(k)} ${n}`).join(', ')}`} /><p className="chart-insight">{top ? `${field === 'transportasi' ? modeLabel(top[0]) : top[0]} leads at ${percent(top[1] / records.length)} of this view.` : 'No observations.'}</p></Panel>
+}
+export function CostHistogram({ records }: { records: Record[] }) {
+  const costs = records.map(r => r.biaya), bins = histogram(costs), med = median(costs), avg = mean(costs)
+  const option: EChartsOption = { grid: { top: 26, left: 52, right: 20, bottom: 48 }, xAxis: { type: 'category', data: bins.map(b => currency(b.low)), ...axis, axisLabel: { ...axis.axisLabel, interval: 2, rotate: 35 } }, yAxis: { type: 'value', ...axis, minInterval: 1, name: 'Respondents', nameTextStyle: { color: '#667085' } },
+    tooltip: { ...tooltip, trigger: 'axis', formatter: (p) => { const i = (p as { dataIndex: number }[])[0].dataIndex; return `${currency(bins[i].low)}–${currency(bins[i].high)}<br/>Respondents: <b>${bins[i].count}</b>` } },
+    series: [{ type: 'bar', data: bins.map(b => b.count), barMaxWidth: 36, itemStyle: { color: '#2563EB' }, markLine: { silent: true, symbol: 'none', label: { show: true, position: 'insideEndTop', formatter: (p) => p.name }, data: [{ name: 'Median', xAxis: Math.min(bins.length - 1, bins.findIndex(b => med <= b.high)), lineStyle: { color: '#0F766E', width: 2 } }, { name: 'Mean', xAxis: Math.min(bins.length - 1, bins.findIndex(b => avg <= b.high)), lineStyle: { color: '#D97706', width: 2, type: 'dashed' } }] } }] }
+  return <Panel title="Spending distribution" note="Respondent-reported transportation cost · current filter"><div className="chart-meta"><span>Median <strong>{currency(med)}</strong></span><span>Mean <strong>{currency(avg)}</strong></span></div><Chart option={option} summary={`Cost histogram, median ${currency(med)}, mean ${currency(avg)}`} /><p className="chart-insight">{avg > med ? 'The mean exceeds the median, consistent with a right-tailed spending distribution.' : 'The mean does not exceed the median in this view.'} Median and mean are shown above the histogram.</p></Panel>
+}
+export function CostBoxplot({ records, dataset }: { records: Record[]; dataset: string }) {
+  const data = modes.map(m => ({ ...m, costs: records.filter(r => r.transportasi === m.key).map(r => r.biaya) })).filter(d => d.costs.length)
+  const option: EChartsOption = { grid: { top: 20, left: 67, right: 14, bottom: 52 }, xAxis: { type: 'category', data: data.map(d => d.label), ...axis, axisLabel: { ...axis.axisLabel, interval: 0, rotate: 15 } }, yAxis: { type: 'value', ...axis, axisLabel: { ...axis.axisLabel, formatter: (v: number) => `${v / 1000}k` } },
+    tooltip: { ...tooltip, trigger: 'item', formatter: (p) => { const d = data[(p as { dataIndex: number }).dataIndex]; if (!d) return ''; const [min, q1, med, q3, max] = box(d.costs); return `${d.label} · n = ${d.costs.length}<br/>Min ${currency(min)} · Q1 ${currency(q1)}<br/><b>Median ${currency(med)}</b><br/>Q3 ${currency(q3)} · Max ${currency(max)}` } },
+    series: [{ type: 'boxplot', data: data.map(d => ({ value: box(d.costs), itemStyle: { color: '#EFF6FF', borderColor: d.color, borderWidth: 2 } })) }] }
+  return <Panel title="Transportation cost by mode" note={`${dataset} · filtered observations · five-number summaries`}><Chart option={option} summary={`Cost boxplot: ${data.map(d => `${d.label} n ${d.costs.length}, median ${currency(median(d.costs))}`).join('; ')}`} /><p className="chart-insight">{data.filter(d => d.costs.length < 5).length > 0 ? 'Small sample: interpret categories with fewer than five respondents cautiously.' : 'Hover over a box for quartiles and sample size.'}</p></Panel>
+}
+export const relationships = [{ key: 'jarak', label: 'Distance', unit: 'km' }, { key: 'waktu', label: 'Travel time', unit: 'min' }, { key: 'tingkatMobilitas', label: 'Mobility level', unit: '/ 10' }, { key: 'umur', label: 'Age', unit: 'years' }] as const
+export type RelationshipKey = typeof relationships[number]['key']
+const statisticalKey: { [K in RelationshipKey]: string } = { jarak: 'jarak', waktu: 'waktu', tingkatMobilitas: 'tingkat_mobilitas', umur: 'umur' }
+export function RelationshipScatter({ records, selected, setSelected, summary }: { records: Record[]; selected: RelationshipKey; setSelected: (key: RelationshipKey) => void; summary: AnalysisSummary }) {
+  const variable = relationships.find(v => v.key === selected)!, test = summary.kendall.find(k => k.variable === statisticalKey[selected])!
+  const option: EChartsOption = { grid: { top: 18, left: 68, right: 20, bottom: 43 }, xAxis: { type: 'value', name: variable.label, nameLocation: 'middle', nameGap: 29, ...axis }, yAxis: { type: 'value', name: 'Cost (Rp)', nameTextStyle: { color: '#667085' }, ...axis, axisLabel: { ...axis.axisLabel, formatter: (v: number) => `${v / 1000}k` } },
+    tooltip: { ...tooltip, trigger: 'item', formatter: (p) => { const r = records[(p as unknown as { data: { sourceIndex: number } }).data.sourceIndex]; return `${modeLabel(r.transportasi)}<br/>Distance: ${number(r.jarak)} km · Time: ${r.waktu} min<br/>Cost: <b>${currency(r.biaya)}</b><br/>Mobility: ${r.tingkatMobilitas} / 10 · Age: ${r.umur}` } },
+    legend: { bottom: 0, textStyle: { color: '#667085', fontSize: 11 } },
+    series: modes.map(m => ({ name: m.label, type: 'scatter', symbolSize: 10, itemStyle: { color: m.color, opacity: .72 }, data: records.map((r, i) => ({ value: [r[selected], r.biaya], sourceIndex: i, mode: r.transportasi })).filter(d => d.mode === m.key) })) }
+  return <Panel title="Relationship with transportation cost" note="Scatter points reflect the current filters; Kendall result is fixed to the full cleaned dataset."><label className="inline-control">X-axis variable <select aria-label="Relationship variable" value={selected} onChange={e => setSelected(e.target.value as RelationshipKey)}>{relationships.map(v => <option value={v.key} key={v.key}>{v.label}</option>)}</select></label><Chart option={option} height={335} summary={`Scatter of ${variable.label} against cost, ${records.length} points by transport mode`} /><p className="chart-insight">Full cleaned dataset, n = {summary.sample.cleaned}: Kendall τ = {number(test.tau, 3)}, {pValue(test.pValue)} ({test.pValue < summary.alpha ? 'significant' : 'not significant'}; α = 0.05). {selected === 'umur' ? 'The observed negative association is weak, and the age range is narrow.' : 'An association does not establish causation.'}</p></Panel>
+}
+export function KendallChart({ summary }: { summary: AnalysisSummary }) {
+  const data = summary.kendall
+  const option: EChartsOption = { grid: { top: 18, left: 105, right: 36, bottom: 32 }, xAxis: { type: 'value', min: -.4, max: .4, ...axis, axisLabel: { ...axis.axisLabel, formatter: (v: number) => number(v) } }, yAxis: { type: 'category', inverse: true, data: data.map(d => labels[d.variable]), ...axis }, tooltip: { ...tooltip, formatter: (p) => { const d = data[(p as { dataIndex: number }).dataIndex]; return `${labels[d.variable]}<br/>Kendall τ: <b>${number(d.tau, 3)}</b><br/>${pValue(d.pValue)} · ${d.pValue < summary.alpha ? 'Significant' : 'Not significant'}` } }, series: [{ type: 'scatter', symbolSize: 13, data: data.map((d, i) => ({ value: [d.tau, i], itemStyle: { color: d.pValue < summary.alpha ? '#2563EB' : '#94A3B8' } })), markLine: { silent: true, symbol: 'none', lineStyle: { color: '#667085', type: 'dashed' }, data: [{ xAxis: 0 }] } }] }
+  return <Panel title="Numeric associations with cost" note={`Kendall's τ · full cleaned dataset, n = ${summary.sample.cleaned} · α = 0.05`}><Chart option={option} height={250} summary={data.map(d => `${labels[d.variable]} tau ${number(d.tau, 3)}, ${pValue(d.pValue)}`).join('; ')} /><div className="test-legend">Blue = significant · Gray = not significant. Direction is shown relative to zero.</div></Panel>
+}
+export function CramersHeatmap({ summary }: { summary: AnalysisSummary }) {
+  const vars = summary.cramersV.variables, vals = summary.cramersV.values
+  const chartData = vals.flatMap((row, i) => row.map((v, j) => [j, i, v]))
+  const option: EChartsOption = { grid: { top: 15, left: 104, right: 34, bottom: 72 }, xAxis: { type: 'category', data: vars.map(v => labels[v]), ...axis, axisLabel: { ...axis.axisLabel, rotate: 32, interval: 0 } }, yAxis: { type: 'category', data: vars.map(v => labels[v]), ...axis }, visualMap: { min: 0, max: 1, calculable: false, orient: 'horizontal', left: 'center', bottom: 0, itemHeight: 8, itemWidth: 120, textStyle: { color: '#667085' }, inRange: { color: ['#EEF4F6', '#0F766E'] } }, tooltip: { ...tooltip, formatter: (p) => { const [x, y, v] = (p as unknown as { data: [number, number, number | null] }).data; return `${labels[vars[y]]} × ${labels[vars[x]]}<br/>Cramér's V: ${v == null ? 'N/A' : number(v, 3)}` } }, series: [{ type: 'heatmap', data: chartData, label: { show: true, color: '#172033', formatter: (p) => { const value = (p.data as [number, number, number | null])[2]; return value == null ? '—' : number(value, 2) } } }] }
+  return <Panel title="Categorical association matrix" note="Cramér's V · full cleaned dataset"><Chart option={option} height={330} summary="Cramér's V matrix for gender, transport mode, vehicle type, and performance" /><p className="chart-insight">Sparse contingency cells make these descriptive associations sensitive to sample composition; no causal claim is implied.</p></Panel>
+}
+export function OutlierChart({ records, field }: { records: Record[]; field: 'umur' | 'jarak' | 'waktu' | 'biaya' | 'tingkatMobilitas' }) {
+  const items = records.map(r => r[field]), stat = box(items)
+  const low = stat[1] - 1.5 * (stat[3] - stat[1]), high = stat[3] + 1.5 * (stat[3] - stat[1])
+  const inliers = items.filter(v => v >= low && v <= high), outliers = items.filter(v => v < low || v > high)
+  const whiskers = [Math.min(...inliers), stat[1], stat[2], stat[3], Math.max(...inliers)]
+  const option: EChartsOption = { grid: { left: 63, right: 23, top: 18, bottom: 26 }, xAxis: { type: 'category', data: [labels[field === 'tingkatMobilitas' ? 'tingkat_mobilitas' : field]], ...axis }, yAxis: { type: 'value', ...axis, axisLabel: { ...axis.axisLabel, formatter: (v: number) => field === 'biaya' ? `${v / 1000}k` : number(v) } }, tooltip: { ...tooltip, formatter: (p) => (p as { seriesType?: string }).seriesType === 'scatter' ? `Outlier: ${number((p as unknown as { data: [number, number] }).data[1])}` : `Whisker ${number(whiskers[0])}–${number(whiskers[4])}<br/>Q1 ${number(stat[1])} · Median ${number(stat[2])}<br/>Q3 ${number(stat[3])}` }, series: [{ type: 'boxplot', data: [whiskers], itemStyle: { color: '#E0F2F1', borderColor: '#0F766E' } }, { type: 'scatter', data: outliers.map(v => [0, v]), symbolSize: 10, itemStyle: { color: '#DC2626' } }] }
+  return <Chart option={option} height={185} summary={`${labels[field]} median ${number(stat[2])}; ${outliers.length} IQR outliers: ${outliers.map(v => number(v)).join(', ') || 'none'}`} />
+}
